@@ -28,4 +28,4 @@ INCDIR=/usr/include/crash
 all: trace.so
 	
 trace.so: $(INCDIR)/defs.h trace.c 
-	gcc $(RPM_OPT_FLAGS) -Wall -I$(INCDIR) -nostartfiles -shared -rdynamic -o trace.so trace.c -fPIC -D$(TARGET) $(TARGET_CFLAGS)
+	gcc $(RPM_OPT_FLAGS) -Wall -I$(INCDIR) -nostartfiles -shared -rdynamic -Wl,-soname,trace.so -o trace.so trace.c -fPIC -D$(TARGET) $(TARGET_CFLAGS)
