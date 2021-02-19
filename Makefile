@@ -6,6 +6,10 @@ ifeq ($(shell arch), ppc64)
   TARGET=PPC64
   TARGET_CFLAGS=-m64
 endif
+ifeq ($(shell arch), ppc64le)
+  TARGET=PPC64
+  TARGET_CFLAGS=-m64
+endif
 ifeq ($(shell arch), ia64)
   TARGET=IA64
   TARGET_CFLAGS=
@@ -20,6 +24,10 @@ ifeq ($(shell arch), s390x)
 endif
 ifeq ($(shell arch), s390)
   TARGET=S390
+  TARGET_CFLAGS=
+endif
+ifeq ($(shell arch), aarch64)
+  TARGET=ARM64
   TARGET_CFLAGS=
 endif
 
