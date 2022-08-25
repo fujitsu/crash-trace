@@ -2251,6 +2251,9 @@ static int add_print_address(long address)
 	size_t len;
 	int i;
 
+	if (!address)
+		return 0;
+
 	len = read_string(address, string, sizeof(string));
 	if (!len)
 		return -1;
