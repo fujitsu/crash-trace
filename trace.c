@@ -2219,13 +2219,10 @@ fail:
 	return -1;
 }
 
-static int save_proc_kallsyms(int fd)
+static void __save_proc_kallsyms_mod_legacy(void)
 {
 	int i;
 	struct syment *sp;
-
-	for (sp = st->symtable; sp < st->symend; sp++)
-		tmp_fprintf("%lx %c %s\n", sp->value, sp->type, sp->name);
 
 	for (i = 0; i < st->mods_installed; i++) {
 		struct load_module *lm = &st->load_modules[i];
@@ -2239,6 +2236,50 @@ static int save_proc_kallsyms(int fd)
 					sp->name, lm->mod_name);
 		}
 	}
+}
+
+#ifdef MODULE_MEMORY
+static void __save_proc_kallsyms_mod_v6_4(void)
+{
+	int i, t;
+	struct syment *sp;
+
+        for (i = 0; i < st->mods_installed; i++) {
+                struct load_module *lm = &st->load_modules[i];
+
+                for_each_mod_mem_type(t) {
+                        if (!lm->symtable[t])
+				continue;
+
+                        for (sp = lm->symtable[t]; sp <= lm->symend[t]; sp++) {
+                                if (!strncmp(sp->name, "_MODULE_", strlen("_MODULE_")))
+                                        continue;
+
+                                /* Currently sp->type for modules is not trusted */
+                                tmp_fprintf("%lx %c %s\t[%s]\n", sp->value, 'm',
+                                            sp->name, lm->mod_name);
+                        }
+                }
+	}
+}
+#else
+#define MODULE_MEMORY() (0)
+static inline void __save_proc_kallsyms_mod_v6_4(void)
+{
+}
+#endif
+
+static int save_proc_kallsyms(int fd)
+{
+	struct syment *sp;
+
+	for (sp = st->symtable; sp < st->symend; sp++)
+		tmp_fprintf("%lx %c %s\n", sp->value, sp->type, sp->name);
+
+	if (MODULE_MEMORY())
+		__save_proc_kallsyms_mod_v6_4();
+	else
+		__save_proc_kallsyms_mod_legacy();
 
 	if (tmp_file_record_size4(fd))
 		return -1;
