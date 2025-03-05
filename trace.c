@@ -1628,7 +1628,52 @@ static int dump_saved_cmdlines(const char *dump_tracing_dir)
 	return 0;
 }
 
-static int dump_kallsyms(const char *dump_tracing_dir)
+#ifdef MODULE_MEMORY
+static int dump_kallsyms_mod_v6_4(const char *dump_tracing_dir)
+{
+	char path[PATH_MAX];
+	FILE *out;
+	int i, t;
+	struct syment *sp;
+
+	snprintf(path, sizeof(path), "%s/kallsyms", dump_tracing_dir);
+	out = fopen(path, "w");
+	if (out == NULL)
+		return -1;
+
+	for (sp = st->symtable; sp < st->symend; sp++)
+		fprintf(out, "%lx %c %s\n", sp->value, sp->type, sp->name);
+
+	for (i = 0; i < st->mods_installed; i++) {
+		struct load_module *lm = &st->load_modules[i];
+
+		for_each_mod_mem_type(t) {
+			if (!lm->symtable[t])
+				continue;
+
+			for (sp = lm->symtable[t]; sp <= lm->symend[t]; sp++) {
+				if (!strncmp(sp->name, "_MODULE_", strlen("_MODULE_")))
+					continue;
+
+				/* Currently sp->type for modules is not trusted */
+				fprintf(out, "%lx %c %s\t[%s]\n", sp->value, 'm',
+					sp->name, lm->mod_name);
+			}
+		}
+	}
+
+	fclose(out);
+	return 0;
+}
+#else
+#define MODULE_MEMORY() (0)
+static int dump_kallsyms_mod_v6_4(const char *dump_tracing_dir)
+{
+	return 0;
+}
+#endif
+
+static int dump_kallsyms_legacy(const char *dump_tracing_dir)
 {
 	char path[PATH_MAX];
 	FILE *out;
@@ -1700,7 +1745,10 @@ static int populate_ftrace_dir_tree(struct trace_instance *ti,
 
 	if (flags & FTRACE_DUMP_SYMBOLS) {
 		/* Dump all symbols of the kernel */
-		dump_kallsyms(root);
+		if (MODULE_MEMORY())
+			dump_kallsyms_mod_v6_4(root);
+		else
+			dump_kallsyms_legacy(root);
 	}
 
 	return TRUE;
@@ -2263,7 +2311,6 @@ static void __save_proc_kallsyms_mod_v6_4(void)
 	}
 }
 #else
-#define MODULE_MEMORY() (0)
 static inline void __save_proc_kallsyms_mod_v6_4(void)
 {
 }
