@@ -59,7 +59,6 @@ static int koffset(tracer, name);
 
 static int koffset(trace_buffer, pages);
 static int koffset(trace_buffer, flags);
-static int koffset(trace_buffer, cpus);
 static int koffset(trace_buffer, buffers);
 
 static int koffset(ring_buffer_per_cpu, cpu);
@@ -229,13 +228,11 @@ static int init_offsets(void)
 		if (!per_cpu_buffer_sizes)
 			init_offset_alternative(trace_buffer, pages, ring_buffer, pages);
 		init_offset_alternative(trace_buffer, flags, ring_buffer, flags);
-		init_offset_alternative(trace_buffer, cpus, ring_buffer, cpus);
 		init_offset_alternative(trace_buffer, buffers, ring_buffer, buffers);
 	} else {
 		if (!per_cpu_buffer_sizes)
 			init_offset(trace_buffer, pages);
 		init_offset(trace_buffer, flags);
-		init_offset(trace_buffer, cpus);
 		init_offset(trace_buffer, buffers);
 	}
 
@@ -297,7 +294,6 @@ static void print_offsets(void)
 
 	print_offset(trace_buffer, pages);
 	print_offset(trace_buffer, flags);
-	print_offset(trace_buffer, cpus);
 	print_offset(trace_buffer, buffers);
 
 	print_offset(ring_buffer_per_cpu, cpu);
